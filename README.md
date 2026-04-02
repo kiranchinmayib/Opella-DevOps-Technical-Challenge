@@ -2,7 +2,9 @@
 
 ## Overview
 
-Each environment uses separate backend state to ensure isolation and prevent accidental cross-environment changes.
+## Each environment uses separate backend state to ensure isolation and prevent accidental cross-environment changes.
+## Terraform apply is intentionally excluded from CI to enforce controlled deployments.
+## Different CIDR ranges are used across environments to avoid overlap and support future network peering.
 
 This repository demonstrates a modular and scalable approach to provisioning Azure infrastructure using Terraform.
 

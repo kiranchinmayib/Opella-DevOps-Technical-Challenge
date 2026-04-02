@@ -1,0 +1,2 @@
+cd environments/dev
+terraform plan > ../../plan-outputs/dev-plan.txt

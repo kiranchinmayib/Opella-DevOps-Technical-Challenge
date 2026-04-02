@@ -16,5 +16,5 @@ resource "azurerm_subnet" "this" {
   address_prefixes     = each.value.address_prefixes
 
   # Optional: service endpoints support
-  service_endpoints = lookup(each.value, "service_endpoints", null)
+  service_endpoints = each.value.service_endpoints
 }

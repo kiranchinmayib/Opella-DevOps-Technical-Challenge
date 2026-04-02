@@ -2,6 +2,8 @@
 
 ## Overview
 
+Each environment uses separate backend state to ensure isolation and prevent accidental cross-environment changes.
+
 This repository demonstrates a modular and scalable approach to provisioning Azure infrastructure using Terraform.
 
 The solution is designed to showcase:

@@ -1,63 +1,44 @@
-# Opella-DevOps-Technical-Challenge
 # Azure Infrastructure Provisioning with Terraform
 
 ## Overview
 
-This repository demonstrates a modular, scalable, and production-ready approach to provisioning Azure infrastructure using Terraform.
+This repository demonstrates a modular and scalable approach to provisioning Azure infrastructure using Terraform.
 
-The solution focuses on:
+The solution is designed to showcase:
 
 * Reusable Infrastructure as Code (IaC)
-* Multi-environment deployment (Dev & Prod)
+* Multi-environment deployment (Development and Production)
 * Secure and maintainable design
-* CI/CD integration using GitHub Actions
+* CI integration using GitHub Actions
 
 ---
 
 ## Architecture
 
-The infrastructure is structured into reusable modules and environment-specific configurations.
+The infrastructure is organized into reusable modules and environment-specific configurations.
 
-### Key Components
+### Components
 
-* **Terraform Module**: Azure Virtual Network (VNET)
-* **Environments**: Dev and Prod
-* **Additional Resources**:
+* **VNET Module** – reusable networking layer
+* **Environments** – Dev and Prod deployments
+* **Additional Resources**
 
-  * Virtual Machine (Linux)
   * Storage Account (Blob)
+  * Virtual Machine (Prod)
 
 ---
 
 ## Repository Structure
 
-```
-.
-├── modules/
-│   └── vnet/
-│       ├── main.tf
-│       ├── variables.tf
-│       ├── outputs.tf
-│       └── README.md
-│
-├── environments/
-│   ├── dev/
-│   │   ├── main.tf
-│   │   ├── variables.tf
-│   │   └── terraform.tfvars
-│   │
-│   └── prod/
-│       ├── main.tf
-│       ├── variables.tf
-│       └── terraform.tfvars
-│
-├── global/
-│   ├── provider.tf
-│   └── backend.tf
-│
+```bash
+azure-terraform-infra/
+├── modules/vnet/
+├── environments/dev/
+├── environments/prod/
 ├── .github/workflows/
-│   └── terraform.yml
-│
+├── scripts/
+├── plan-outputs/
+├── .gitignore
 └── README.md
 ```
 
@@ -65,90 +46,113 @@ The infrastructure is structured into reusable modules and environment-specific 
 
 ## Design Decisions
 
-### 1. Modular Architecture
+### 1. Modular Design
 
-The VNET is implemented as a reusable module to:
+The Virtual Network is implemented as a reusable module:
 
-* Avoid duplication
-* Ensure consistency across environments
-* Enable scalability
-
-### 2. Environment Isolation
-
-* Each environment (Dev, Prod) is deployed in separate **Resource Groups**
-* Design allows future extension to **separate subscriptions**
-
-### 3. Naming Convention
-
-Resources follow a structured naming pattern:
-
-```
-<resource>-<environment>-<region>
-```
-
-Example:
-
-```
-vnet-dev-eastus
-vm-prod-eastus
-```
-
-### 4. Tagging Strategy
-
-All resources are tagged for governance and cost tracking:
-
-* environment
-* owner
-* costcenter
+* Eliminates duplication
+* Ensures consistency
+* Enables reuse across environments
 
 ---
 
-## Terraform Module: VNET
+### 2. Environment Separation
+
+Each environment (Dev, Prod):
+
+* Uses separate Resource Groups
+* Maintains independent Terraform state
+* Allows safe and isolated deployments
+
+---
+
+### 3. Naming Convention
+
+Resources follow a consistent naming pattern:
+
+```bash
+<resource>-<environment>-<region>
+```
+
+**Examples:**
+
+* vnet-dev-eastus
+* rg-prod-eastus
+
+---
+
+### 4. Tagging Strategy
+
+All resources include standardized tags:
+
+```hcl
+environment = "dev | prod"
+owner       = "platform-team"
+costcenter  = "engineering"
+```
+
+Purpose:
+
+* Cost tracking
+* Governance
+* Resource filtering
+
+---
+
+## Terraform Module – VNET
 
 ### Features
 
 * Configurable address space
 * Dynamic subnet creation using `for_each`
-* Tag support
-* Reusable across environments
+* Optional service endpoints
+* Tagging support
 
 ### Inputs
 
-| Name                | Description               |
+| Variable            | Description               |
 | ------------------- | ------------------------- |
 | name                | VNET name                 |
 | location            | Azure region              |
 | resource_group_name | Target resource group     |
-| address_space       | CIDR block                |
+| address_space       | CIDR range                |
 | subnets             | Map of subnet definitions |
 | tags                | Resource tags             |
 
 ### Outputs
 
-| Name       | Description       |
-| ---------- | ----------------- |
-| vnet_id    | ID of the VNET    |
-| subnet_ids | Map of subnet IDs |
+| Output     | Description          |
+| ---------- | -------------------- |
+| vnet_id    | Virtual Network ID   |
+| vnet_name  | Virtual Network name |
+| subnet_ids | Map of subnet IDs    |
 
 ---
 
-## Additional Resources
+## Environment Configuration
 
-### Virtual Machine
+### Development (Dev)
 
-* Linux VM (Standard_B1s)
-* Used for basic compute validation
+* Region: eastus
+* Storage: LRS (cost-optimized)
+* Smaller footprint
 
-### Storage Account
+---
 
-* Blob storage enabled
-* Used for application/data storage simulation
+### Production (Prod)
+
+* Region: eastus
+* Storage: GRS (high availability)
+* Includes Virtual Machine
+* Enhanced tagging and governance
 
 ---
 
 ## Remote State Management
 
 Terraform state is stored in Azure Storage:
+
+Benefits:
 
 * Enables team collaboration
 * Prevents state conflicts
@@ -158,20 +162,18 @@ Terraform state is stored in Azure Storage:
 
 ## CI/CD Pipeline
 
-Implemented using GitHub Actions.
+GitHub Actions is used for validation and planning.
 
-### Pipeline Stages
+### Pipeline Steps
 
-1. Checkout code
-2. Terraform Init
-3. Terraform Validate
-4. Terraform Plan
+1. Terraform format check
+2. Terraform init
+3. Terraform validate
+4. Terraform plan
 
-### Future Enhancements
+### Why no `apply`?
 
-* Add approval gate before `apply`
-* Add environment-based deployments
-* Integrate security scanning
+Deployment should be controlled with approvals and not executed automatically in CI.
 
 ---
 
@@ -179,10 +181,10 @@ Implemented using GitHub Actions.
 
 Tools used:
 
-* `terraform fmt` → formatting
-* `terraform validate` → syntax validation
-* `tflint` → linting
-* `checkov` → security scanning
+* `terraform fmt` – formatting
+* `terraform validate` – syntax validation
+* `tflint` – linting
+* `checkov` – security scanning
 
 ---
 
@@ -194,52 +196,73 @@ Tools used:
 * Azure CLI authenticated
 * Azure subscription
 
-### Steps
+---
+
+### Run Dev Environment
 
 ```bash
 cd environments/dev
-
 terraform init
 terraform plan
-terraform apply
 ```
 
 ---
 
-## Terraform Plan Output
+### Run Prod Environment
 
-Include your generated plan output here or as a separate file:
-
-```
-terraform plan > plan-output.txt
+```bash
+cd environments/prod
+terraform init
+terraform plan
 ```
 
 ---
 
-## Scalability Considerations
+## Plan Outputs
 
-This design supports:
+Terraform plans are stored for review:
 
-* Multi-region deployments
-* Multi-environment setups
-* Easy extension to additional modules (AKS, DB, etc.)
+```bash
+plan-outputs/
+├── dev-plan.txt
+└── prod-plan.txt
+```
 
 ---
 
-## Testing Strategy (Optional)
+## Key Considerations
 
-* `terraform validate` for syntax checks
-* `terraform plan` for dry-run validation
-* Can be extended using Terratest for automated testing
+### Resource Groups vs Subscriptions
+
+* Current setup uses Resource Groups for environment separation
+* Design supports future expansion to separate subscriptions
+
+---
+
+### CIDR Strategy
+
+* Dev: 10.0.0.0/16
+* Prod: 10.1.0.0/16
+
+Prevents overlap and supports future network peering
+
+---
+
+### Security Approach
+
+* SSH key-based VM access
+* No hardcoded secrets
+* Security scanning integrated in pipeline
 
 ---
 
 ## Future Improvements
 
-* Add NSGs and security rules
-* Implement private endpoints
-* Add Key Vault integration
-* Introduce Terraform workspaces or environment pipelines
+* Network Security Groups (NSG)
+* Private endpoints
+* Azure Key Vault integration
+* Multi-region deployments
+* Approval-based deployment pipeline
 
 ---
 
@@ -248,9 +271,8 @@ This design supports:
 This project demonstrates:
 
 * Clean Terraform module design
-* Environment separation
-* CI/CD integration
-* Security and governance best practices
+* Environment isolation
+* CI pipeline integration
+* Scalable and maintainable infrastructure
 
-The focus is on building infrastructure that is not only functional, but also maintainable, reusable, and production-ready.
-
+The focus is on building infrastructure that is reusable, secure, and production-ready.
